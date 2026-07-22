@@ -14,7 +14,7 @@ function Dashboard() {
   const fetchRegistrations = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:5000/api/registrations');
+      const response = await axios.get('https://course-register-cx0t.onrender.com/api/registrations');
       setRegistrations(response.data);
       setLoading(false);
     } catch (err) {
@@ -27,7 +27,7 @@ function Dashboard() {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this registration?')) {
       try {
-        await axios.delete(`http://localhost:5000/api/registrations/${id}`);
+        await axios.delete(`https://course-register-cx0t.onrender.com/api/registrations/${id}`);
         setRegistrations(registrations.filter(reg => reg._id !== id));
       } catch (err) {
         console.error('Error deleting registration:', err);

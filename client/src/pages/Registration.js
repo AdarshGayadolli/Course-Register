@@ -30,7 +30,7 @@ function Registration() {
     e.preventDefault();
     
     try {
-      const response = await axios.post('http://localhost:5000/api/register', formData);
+      const response = await axios.post('https://course-register-cx0t.onrender.com/api/register', formData);
       setSubmitStatus({
         submitted: true,
         success: true,
