@@ -6,7 +6,10 @@ require('dotenv').config();
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['https://register.medinitechnologies.in/', 'https://register.medinitechnologies.in'],
+  credentials: true
+}));
 app.use(express.json());
 
 // MongoDB Connection
