@@ -7,8 +7,17 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: ['https://register.medinitechnologies.in/', 'https://register.medinitechnologies.in','https://course-register-xi.vercel.app/'],
-  credentials: true
+  origin: [
+    'https://register.medinitechnologies.in',
+    'https://register.medinitechnologies.in/',
+    'https://course-register-xi.vercel.app',
+    'https://course-register-xi.vercel.app/',
+    'http://localhost:3000',
+    'http://localhost:3001'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'DELETE', 'PUT', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 
