@@ -11,16 +11,25 @@ function Dashboard() {
     fetchRegistrations();
   }, []);
 
+  useEffect(() => {
+    console.log('Registrations state updated:', registrations);
+    console.log('Registrations length:', registrations.length);
+  }, [registrations]);
+
   const fetchRegistrations = async () => {
     try {
       setLoading(true);
       const response = await axios.get('https://course-register-cx0t.onrender.com/api/registrations');
+      console.log('API Response:', response.data);
+      console.log('Response type:', typeof response.data);
+      console.log('Is array:', Array.isArray(response.data));
       setRegistrations(response.data);
       setLoading(false);
     } catch (err) {
       setError('Error fetching registrations');
       setLoading(false);
       console.error('Error:', err);
+      console.error('Error response:', err.response);
     }
   };
 
