@@ -13,11 +13,24 @@ app.use(cors({
 app.use(express.json());
 
 // MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/registrationDB', {
+const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/registrationDB';
+mongoose.connect(mongoURI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-.then(() => console.log('MongoDB connected successfully'))
+.then(() => {
+  console.log('MongoDB connected successfully');
+  console.log('Database URI:', mongoURI);
+  
+  // Test connection by checking if database is accessible
+  mongoose.connection.db.listCollections().toArray((err, collections) => {
+    if (err) {
+      console.error('Error listing collections:', err);
+    } else {
+      console.log('Available collections:', collections.map(c => c.name));
+    }
+  });
+})
 .catch((err) => console.error('MongoDB connection error:', err));
 
 // Registration Schema
@@ -64,6 +77,7 @@ const Registration = mongoose.model('Registration', registrationSchema);
 // POST - Create new registration
 app.post('/api/register', async (req, res) => {
   try {
+    console.log('POST /api/register - Received request body:', req.body);
     const { firstName, lastName, email, phoneNumber, highestQualification, yearOfPassing, message } = req.body;
     
     const newRegistration = new Registration({
@@ -77,6 +91,7 @@ app.post('/api/register', async (req, res) => {
     });
 
     const savedRegistration = await newRegistration.save();
+    console.log('Registration saved successfully:', savedRegistration);
     res.status(201).json(savedRegistration);
   } catch (error) {
     console.error('Error saving registration:', error);
@@ -87,7 +102,10 @@ app.post('/api/register', async (req, res) => {
 // GET - Get all registrations
 app.get('/api/registrations', async (req, res) => {
   try {
+    console.log('GET /api/registrations - Fetching all registrations');
     const registrations = await Registration.find().sort({ createdAt: -1 });
+    console.log('Found registrations:', registrations.length);
+    console.log('Registrations data:', JSON.stringify(registrations, null, 2));
     res.json(registrations);
   } catch (error) {
     console.error('Error fetching registrations:', error);
