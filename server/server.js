@@ -1,6 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const nodemailer = require('nodemailer');
+const twilio = require('twilio');
 require('dotenv').config();
 
 const app = express();
@@ -81,6 +83,145 @@ const registrationSchema = new mongoose.Schema({
 
 const Registration = mongoose.model('Registration', registrationSchema);
 
+// Email Configuration
+const transporter = nodemailer.createTransport({
+  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+  port: process.env.EMAIL_PORT || 587,
+  secure: false,
+  auth: {
+    user: process.env.EMAIL_USER || 'support@medinitechnologies.in',
+    pass: process.env.EMAIL_PASS
+  }
+});
+
+// SMS Configuration
+const twilioClient = twilio(
+  process.env.TWILIO_ACCOUNT_SID,
+  process.env.TWILIO_AUTH_TOKEN
+);
+
+// Send confirmation email to submitter
+const sendConfirmationEmail = async (data) => {
+  try {
+    const mailOptions = {
+      from: process.env.EMAIL_USER || 'support@medinitechnologies.in',
+      to: data.email,
+      subject: 'Thank You for Reaching Out - Medini Technologies',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background-color: #000; padding: 20px; text-align: center;">
+            <h2 style="color: white; margin: 0;">Medini Technologies</h2>
+          </div>
+          <div style="padding: 30px 20px; background-color: #f8f8f8;">
+            <h3 style="color: #000;">Thank You for Reaching Out!</h3>
+            <p style="color: #333; line-height: 1.6;">Dear ${data.firstName} ${data.lastName},</p>
+            <p style="color: #333; line-height: 1.6;">Thank you for your interest in Medini Technologies. We have received your enquiry and our team will contact you soon.</p>
+            <p style="color: #333; line-height: 1.6;"><strong>Your Details:</strong></p>
+            <ul style="color: #333; line-height: 1.6;">
+              <li>Name: ${data.firstName} ${data.lastName}</li>
+              <li>Email: ${data.email}</li>
+              <li>Phone: ${data.phoneNumber}</li>
+              <li>Qualification: ${data.highestQualification}</li>
+              <li>Year of Passing: ${data.yearOfPassing}</li>
+            </ul>
+            <p style="color: #333; line-height: 1.6;">If you have any urgent questions, please feel free to contact us at support@medinitechnologies.in or call us at +91 96863 11005.</p>
+            <p style="color: #333; line-height: 1.6;">Best regards,<br>Medini Technologies Team</p>
+          </div>
+          <div style="background-color: #000; padding: 15px; text-align: center;">
+            <p style="color: white; margin: 0; font-size: 12px;">© 2024 Medini Technologies. All rights reserved.</p>
+          </div>
+        </div>
+      `
+    };
+    await transporter.sendMail(mailOptions);
+    console.log('Confirmation email sent to:', data.email);
+  } catch (error) {
+    console.error('Error sending confirmation email:', error);
+  }
+};
+
+// Send registration data to admin team
+const sendAdminEmail = async (data) => {
+  try {
+    const mailOptions = {
+      from: process.env.EMAIL_USER || 'support@medinitechnologies.in',
+      to: process.env.ADMIN_EMAIL || 'support@medinitechnologies.in',
+      subject: 'New Registration Enquiry - Medini Technologies',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background-color: #000; padding: 20px; text-align: center;">
+            <h2 style="color: white; margin: 0;">New Registration Enquiry</h2>
+          </div>
+          <div style="padding: 30px 20px; background-color: #f8f8f8;">
+            <h3 style="color: #000;">Student Registration Details</h3>
+            <p style="color: #333; line-height: 1.6;">A new student has registered for enquiry. Here are the details:</p>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+              <tr style="background-color: #000; color: white;">
+                <th style="padding: 10px; text-align: left;">Field</th>
+                <th style="padding: 10px; text-align: left;">Details</th>
+              </tr>
+              <tr style="background-color: white;">
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>First Name:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${data.firstName}</td>
+              </tr>
+              <tr style="background-color: #f9f9f9;">
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Last Name:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${data.lastName}</td>
+              </tr>
+              <tr style="background-color: white;">
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Email:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${data.email}</td>
+              </tr>
+              <tr style="background-color: #f9f9f9;">
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Phone:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${data.phoneNumber}</td>
+              </tr>
+              <tr style="background-color: white;">
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Qualification:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${data.highestQualification}</td>
+              </tr>
+              <tr style="background-color: #f9f9f9;">
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Year of Passing:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${data.yearOfPassing}</td>
+              </tr>
+              <tr style="background-color: white;">
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Message:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${data.message || 'N/A'}</td>
+              </tr>
+              <tr style="background-color: #f9f9f9;">
+                <td style="padding: 10px; border: 1px solid #ddd;"><strong>Registered On:</strong></td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${new Date().toLocaleString()}</td>
+              </tr>
+            </table>
+            <p style="color: #333; line-height: 1.6; margin-top: 20px;">Please follow up with the student at the earliest.</p>
+          </div>
+        </div>
+      `
+    };
+    await transporter.sendMail(mailOptions);
+    console.log('Admin email sent successfully');
+  } catch (error) {
+    console.error('Error sending admin email:', error);
+  }
+};
+
+// Send SMS notification
+const sendSMSNotification = async (data) => {
+  try {
+    const adminPhone = process.env.ADMIN_PHONE || '+919686311005';
+    const message = `New Registration: ${data.firstName} ${data.lastName}, ${data.email}, ${data.phoneNumber}, ${data.highestQualification}, ${data.yearOfPassing}. Enquiry received at Medini Technologies.`;
+    
+    await twilioClient.messages.create({
+      body: message,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      to: adminPhone
+    });
+    console.log('SMS notification sent to:', adminPhone);
+  } catch (error) {
+    console.error('Error sending SMS:', error);
+  }
+};
+
 // Routes
 
 // POST - Create new registration
@@ -101,10 +242,50 @@ app.post('/api/register', async (req, res) => {
 
     const savedRegistration = await newRegistration.save();
     console.log('Registration saved successfully:', savedRegistration);
+
+    // Send notifications asynchronously (don't block response)
+    // Send confirmation email to submitter
+    sendConfirmationEmail({
+      firstName,
+      lastName,
+      email,
+      phoneNumber,
+      highestQualification,
+      yearOfPassing
+    }).catch(err => console.error('Confirmation email failed:', err));
+
+    // Send registration data to admin team
+    sendAdminEmail({
+      firstName,
+      lastName,
+      email,
+      phoneNumber,
+      highestQualification,
+      yearOfPassing,
+      message
+    }).catch(err => console.error('Admin email failed:', err));
+
+    // Send SMS notification to admin
+    sendSMSNotification({
+      firstName,
+      lastName,
+      email,
+      phoneNumber,
+      highestQualification,
+      yearOfPassing
+    }).catch(err => console.error('SMS notification failed:', err));
+
     res.status(201).json(savedRegistration);
   } catch (error) {
     console.error('Error saving registration:', error);
-    res.status(500).json({ error: 'Error saving registration' });
+    console.error('Error details:', error.message);
+    console.error('Error code:', error.code);
+    if (error.code === 11000) {
+      console.error('Duplicate key error - email already exists');
+      res.status(400).json({ error: 'Email already registered' });
+    } else {
+      res.status(500).json({ error: 'Error saving registration', details: error.message });
+    }
   }
 });
 
